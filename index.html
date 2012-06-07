@@ -1,0 +1,110 @@
+<!doctype html> 
+<html lang="en-us"> 
+  <head> 
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Users</title> 
+    <link rel="stylesheet" type="text/css" href="css/kujua.css" />
+    <link rel="stylesheet" type="text/css" href="css/users.css" />
+    <style>
+      html, body {
+        background: white !important;
+      }
+    </style>
+  </head>
+  <body>
+
+    <script src="js/jquery-1.7.2.js"></script>
+    <script src="js/jquery.dispatch.js"></script>
+    <script src="bootstrap/js/bootstrap-button.js"></script>
+    <script src="modules.js"></script>
+    <script>
+
+      // this is based on duality-dust/duality/templates.js and
+      // duality/duality/utils.js
+
+      var dust = require('dust');
+          settings = require('settings/root');
+      
+      if (!dust.optimizers) {
+        dust.optimizers = {};
+      }
+
+      // disable whitespace compression
+      dust.optimizers.format = function (ctx, node) {
+        return node;
+      };
+
+      function getBaseURL() {
+        var re = new RegExp('(.*\\/_rewrite).*$');
+        var match = re.exec(window.location.pathname);
+        if (match) {
+          return match[1];
+        }
+        return '';
+      }
+
+      var context = {
+        baseURL: getBaseURL(),
+        kujua_baseURL: settings.kujua_baseURL
+      };
+
+      var r = '';
+      dust.render('base.html', context, function (err, result) {
+        if (err) {
+          throw err;
+        }
+        r = result;
+      });
+
+      $(document.body).html(r);
+
+
+
+      var app = require('ui/app');
+      app.init();
+
+      var session = require('session');
+      session.on('change', function (userCtx) {
+        if (userCtx.name) {
+          $('#session').html(
+            '<ul class="nav">' +
+              '<li><a href="#/view/' + encodeURIComponent(userCtx.name) + '">' + userCtx.name + '</a></li>' +
+              '<li class="divider-vertical"></li>' +
+              '<li><a id="signout-link" href="#"><i class="icon-signout"></i> Sign Out</a></li>' +
+            '</ul>'
+          );
+        }
+        else {
+          $('#session').html(
+            '<ul class="nav">' +
+              '<li><a href="#/signup">Create account</a></li>' +
+              '<li class="divider-vertical"></li>' +
+              '<li><a id="signin-link" href="#/login"><i class="icon-signin"></i> Sign in</a></li>' +
+            '</ul>'
+          );
+        }
+      });
+      $('#session').on('click', '#signin-link', function (ev) {
+        if (window.location.hash !== '#/login' &&
+            window.location.hash !== '#/signup') {
+          ev.preventDefault();
+          window.location = $('#signin-link').attr('href') + '/' +
+            encodeURIComponent(window.location);
+          return false;
+        }
+      });
+      $('#session').on('click', '#signout-link', function (ev) {
+        ev.preventDefault();
+        session.logout(function (err) {
+          if (!err) {
+            window.location.reload();
+          }
+        });
+        return false;
+      });
+      session.info();
+    </script>
+
+  </body>
+</html>

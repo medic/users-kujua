@@ -1,0 +1,3 @@
+[submodule "packages/users-core"]
+	path = packages/users-core
+	url = git://github.com/caolan/users-core.git
